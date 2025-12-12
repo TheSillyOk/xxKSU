@@ -308,6 +308,8 @@ static __always_inline void ksu_sucompat_user_execve(const char __user **filenam
 	if (!is_user_filename_su(filename_user))
 		return;
 
+	write_sulog('x');
+
 #ifdef CONFIG_KSU_FEATURE_SULOG
 	ksu_sulog_emit(KSU_SULOG_EVENT_SUCOMPAT, NULL, 0, GFP_KERNEL);
 #endif
@@ -330,6 +332,11 @@ static __always_inline void ksu_sucompat_user_common(const char __user **filenam
 
 	if (!is_user_filename_su(filename_user))
 		return;
+
+	if (!__builtin_strcmp(syscall_name, "sys_faccessat"))
+		write_sulog('a');
+	if (!__builtin_strcmp(syscall_name, "sys_newfstatat"))
+		write_sulog('s');
 
 	pr_info("su_compat: %s su->sh!%s\n", syscall_name, (is_compat_task()) ? " [compat]" : "" );
 	*filename_user = sh_user_path();
@@ -402,6 +409,9 @@ static __always_inline void ksu_sucompat_kernel_execve(int *restrict fd, void **
 
 	if (!is_kernel_filename_su((const char **)filename_ptr))
 		return;
+
+	// we only handle execve here after removing vfs_statx hook for >= 6.1
+	write_sulog('x');
 
 #ifdef CONFIG_KSU_FEATURE_SULOG
 	ksu_sulog_emit(KSU_SULOG_EVENT_SUCOMPAT, NULL, 0, GFP_KERNEL);
@@ -525,6 +535,8 @@ void __init ksu_sucompat_init()
 	if (ksu_register_feature_handler(&su_compat_handler)) {
 		pr_err("Failed to register su_compat feature handler\n");
 	}
+
+	tiny_sulog_init_heap();
 }
 
 void __exit ksu_sucompat_exit()
