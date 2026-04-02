@@ -303,6 +303,9 @@ static __always_inline void ksu_sucompat_user_execve(const char __user **filenam
 	if (!is_user_filename_su(filename_user))
 		return;
 
+#ifdef CONFIG_KSU_FEATURE_SULOG
+	ksu_sulog_emit(KSU_SULOG_EVENT_SUCOMPAT, NULL, 0, GFP_KERNEL);
+#endif
 	if (!!escape_with_root_profile())
 		return;
 
@@ -390,6 +393,9 @@ static __always_inline void ksu_sucompat_kernel_execve(int *restrict fd, void **
 	if (!is_kernel_filename_su((const char **)filename_ptr))
 		return;
 
+#ifdef CONFIG_KSU_FEATURE_SULOG
+	ksu_sulog_emit(KSU_SULOG_EVENT_SUCOMPAT, NULL, 0, GFP_KERNEL);
+#endif
 	if (!!escape_with_root_profile())
 		return;
 
