@@ -2,9 +2,9 @@ name: Sync
 
 permissions:
   contents: write
+  actions: write
 
 on:
-  push:
   workflow_dispatch:
   schedule:
    - cron: "0 12 * * *"
@@ -20,15 +20,16 @@ jobs:
           ref: 'master'
           submodules: 'recursive'
           fetch-depth: '0'
+          token: "${{ secrets.WORKFLOW_TOKEN }}"
 
       - name: Apply changes
-        env:
-         GH_TOKEN: ${{ github.token }}
         run: |
-          curl -LSs https://gist.github.com/TheSillyOk/8b74b5f2c6b1da211ef93c3176d0e235/raw/08635149ac2badeb1c64f797411613cf3529bd10/xxksu > xxksu.patch
+          curl -LSs https://gist.github.com/TheSillyOk/8b74b5f2c6b1da211ef93c3176d0e235/raw/xxksu.patch > xxksu.patch
           patch -p1 < xxksu.patch
 
-          gh auth setup-git
+          curl -LSs https://gist.github.com/TheSillyOk/8b74b5f2c6b1da211ef93c3176d0e235/raw/sync.yml > sync.yml
+          mv sync.yml .github/workflows/
+
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .
