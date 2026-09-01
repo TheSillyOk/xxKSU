@@ -1,0 +1,83 @@
+name: Sync
+
+permissions:
+  contents: write
+  actions: write
+
+on:
+  workflow_dispatch:
+  schedule:
+   - cron: "0 12 * * *"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          repository: 'backslashxx/KernelSU'
+          ref: 'master'
+          submodules: 'recursive'
+          fetch-depth: '0'
+          token: "${{ secrets.WORKFLOW_TOKEN }}"
+
+      - name: Apply changes
+        run: |
+          curl -LSs https://gist.github.com/TheSillyOk/8b74b5f2c6b1da211ef93c3176d0e235/raw/xxksu.patch > xxksu.patch
+          patch -p1 < xxksu.patch
+
+          curl -LSs https://gist.github.com/TheSillyOk/8b74b5f2c6b1da211ef93c3176d0e235/raw/sync.yml > sync.yml
+          mv sync.yml .github/workflows/
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Apply changes"
+
+      - name: Push
+        run: |
+          git remote add my https://github.com/${{ github.repository }}
+          git push my master -f
+
+  build-manager:
+    needs:
+      - sync
+    uses: ./.github/workflows/build-manager.yml
+    secrets: inherit
+
+  release:
+    needs:
+      - build-manager
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v8
+
+      - name: Rename ksud
+        run: |
+          mkdir -p ksud
+          for dir in ./ksud-*; do
+              if [ -d "$dir" ]; then
+                 echo "----- Rename $dir -----"
+                 ksud_platform_name=$(basename "$dir")
+                 find "$dir" -type f -name "ksud" -path "*/release/*" | while read -r ksud_file; do
+                   if [ -f "$ksud_file" ]; then
+                     mv "$ksud_file" "ksud/$ksud_platform_name"
+                   fi
+                 done
+              fi
+          done
+
+      - name: Display structure of downloaded files
+        run: ls -R
+
+      - name: release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.run_number }}
+          files: |
+            manager/*.apk
+            android*-lkm/*_kernelsu.ko
+            ksud/ksud-*
+            ksuinit/**
