@@ -38,3 +38,45 @@ jobs:
         run: |
           git remote add my https://github.com/${{ github.repository }}
           git push my master -f
+
+  build-manager:
+    needs:
+      - sync
+    uses: ./.github/workflows/build-manager.yml
+    secrets: inherit
+
+  release:
+    needs:
+      - build-manager
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v8
+
+      - name: Rename ksud
+        run: |
+          mkdir -p ksud
+          for dir in ./ksud-*; do
+              if [ -d "$dir" ]; then
+                 echo "----- Rename $dir -----"
+                 ksud_platform_name=$(basename "$dir")
+                 find "$dir" -type f -name "ksud" -path "*/release/*" | while read -r ksud_file; do
+                   if [ -f "$ksud_file" ]; then
+                     mv "$ksud_file" "ksud/$ksud_platform_name"
+                   fi
+                 done
+              fi
+          done
+
+      - name: Display structure of downloaded files
+        run: ls -R
+
+      - name: release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.run_number }}
+          files: |
+            manager/*.apk
+            android*-lkm/*_kernelsu.ko
+            ksud/ksud-*
+            ksuinit/**
