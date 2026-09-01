@@ -1,0 +1,13 @@
+diff --git a/kernel/Makefile b/kernel/Makefile
+index c266e074..83b4334f 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -138,7 +138,7 @@ endif
+ # you can get optimized codegen especially around atomics.
+ # hint: decode your own /proc/cpuinfo and check it here https://github.com/llvm/llvm-project/blob/main/llvm/lib/TargetParser/Host.cpp
+ # comment it out and put your cpu / arch here
+-# CFLAGS_ksu.o += -mcpu=cortex-a76 -mtune=cortex-a76
++CFLAGS_ksu.o += -mcpu=cortex-x1 -mtune=cortex-x1
+ 
+ ifneq ($(CONFIG_KSU_DEBUG),y)
+ # strip, remove tracing / profiling
