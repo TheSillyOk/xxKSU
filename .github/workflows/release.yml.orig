@@ -64,7 +64,6 @@ jobs:
       - name: release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ github.run_number }}-${{ github.sha }}
           files: |
             manager/*.apk
             lkm/lkm-*_kernelsu.ko

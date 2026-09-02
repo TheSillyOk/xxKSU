@@ -1,0 +1,44 @@
+diff --git a/.github/workflows/build-lkm.yml b/.github/workflows/build-lkm.yml
+index c7664757..6b86051e 100644
+--- a/.github/workflows/build-lkm.yml
++++ b/.github/workflows/build-lkm.yml
+@@ -18,14 +18,7 @@ jobs:
+     strategy:
+       matrix:
+         kmi:
+-          - android12-5.10
+-          - android13-5.10
+-          - android13-5.15
+-          - android14-5.15
+-          - android14-6.1
+-          - android15-6.6
+           - android16-6.12
+-          - android17-6.18
+     uses: ./.github/workflows/ddk-lkm.yml
+     with:
+       kmi: ${{ matrix.kmi }}
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+index ac69cd1a..d6ac09b2 100644
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -38,6 +38,7 @@ jobs:
+       - name: release
+         uses: softprops/action-gh-release@v3
+         with:
++          tag_name: ${{ github.run_number }}-${{ github.sha }}
+           files: |
+             manager/*.apk
+             android*-lkm/*_kernelsu.ko
+diff --git a/kernel/Makefile b/kernel/Makefile
+index c266e074..83b4334f 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -138,7 +138,7 @@ endif
+ # you can get optimized codegen especially around atomics.
+ # hint: decode your own /proc/cpuinfo and check it here https://github.com/llvm/llvm-project/blob/main/llvm/lib/TargetParser/Host.cpp
+ # comment it out and put your cpu / arch here
+-# CFLAGS_ksu.o += -mcpu=cortex-a76 -mtune=cortex-a76
++CFLAGS_ksu.o += -mcpu=cortex-x1 -mtune=cortex-x1
+ 
+ ifneq ($(CONFIG_KSU_DEBUG),y)
+ # strip, remove tracing / profiling
