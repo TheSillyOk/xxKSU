@@ -1,0 +1,104 @@
+diff --git a/.github/workflows/build-lkm.yml b/.github/workflows/build-lkm.yml
+index c7664757..6b86051e 100644
+--- a/.github/workflows/build-lkm.yml
++++ b/.github/workflows/build-lkm.yml
+@@ -18,14 +18,7 @@ jobs:
+     strategy:
+       matrix:
+         kmi:
+-          - android12-5.10
+-          - android13-5.10
+-          - android13-5.15
+-          - android14-5.15
+-          - android14-6.1
+-          - android15-6.6
+           - android16-6.12
+-          - android17-6.18
+     uses: ./.github/workflows/ddk-lkm.yml
+     with:
+       kmi: ${{ matrix.kmi }}
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+index ac69cd1a..79c6aa38 100644
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -35,9 +35,19 @@ jobs:
+       - name: Display structure of downloaded files
+         run: ls -R
+ 
++      - name: Get KSU version
++        run: |
++          curl -LSs https://github.com/TheSillyOk/sh/raw/refs/heads/main/get_ksuver.sh > get_ksuver.sh
++          REPO="${{ github.repository }}"
++          echo "ksu_v=$(bash get_ksuver.sh ${REPO//\// } ${{ github.ref_name }})" >> $GITHUB_ENV
++
++          GITHUB_SHA="${{ github.sha }}"
++          echo "short_sha=${GITHUB_SHA:0:7}" >> $GITHUB_ENV
++
+       - name: release
+         uses: softprops/action-gh-release@v3
+         with:
++          tag_name: ${{ env.ksu_v }}-${{ github.ref_name }}-${{ env.short_sha }}
+           files: |
+             manager/*.apk
+             android*-lkm/*_kernelsu.ko
+diff --git a/.github/workflows/sync.yml b/.github/workflows/sync.yml
+new file mode 100644
+index 00000000..b91e8a69
+--- /dev/null
++++ b/.github/workflows/sync.yml
+@@ -0,0 +1,42 @@
++name: Sync
++
++permissions:
++  contents: write
++  actions: write
++
++on:
++  workflow_dispatch:
++  schedule:
++   - cron: "0 */6 * * *"
++
++jobs:
++  sync:
++    runs-on: ubuntu-latest
++    steps:
++      - name: Checkout
++        uses: actions/checkout@v7
++        with:
++          repository: 'backslashxx/KernelSU'
++          ref: "${{ github.ref_name }}"
++          submodules: 'recursive'
++          fetch-depth: '0'
++          token: "${{ secrets.WORKFLOW_TOKEN }}"
++
++      - name: Apply changes
++        run: |
++          curl -LSs https://gist.github.com/TheSillyOk/8b74b5f2c6b1da211ef93c3176d0e235/raw/xxksu.patch > xxksu.patch
++          patch -p1 < xxksu.patch
++
++          git config --global user.name "github-actions[bot]"
++          git config --global user.email "github-actions[bot]@users.noreply.github.com"
++          git add .
++          git commit -m "Apply changes"
++
++      - name: Push
++        env:
++          GH_TOKEN: "${{ secrets.WORKFLOW_TOKEN }}"
++        run: |
++          git remote add my https://github.com/${{ github.repository }}
++          git push my ${{ github.ref_name }} -f
++
++          gh workflow run "release.yml" -R "${{ github.repository }}" -r "${{ github.ref_name }}"
+diff --git a/kernel/Makefile b/kernel/Makefile
+index c266e074..83b4334f 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -138,7 +138,7 @@ endif
+ # you can get optimized codegen especially around atomics.
+ # hint: decode your own /proc/cpuinfo and check it here https://github.com/llvm/llvm-project/blob/main/llvm/lib/TargetParser/Host.cpp
+ # comment it out and put your cpu / arch here
+-# CFLAGS_ksu.o += -mcpu=cortex-a76 -mtune=cortex-a76
++CFLAGS_ksu.o += -mcpu=cortex-x1 -mtune=cortex-x1
+ 
+ ifneq ($(CONFIG_KSU_DEBUG),y)
+ # strip, remove tracing / profiling
