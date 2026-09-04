@@ -61,19 +61,9 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R
 
-      - name: Get KSU version
-        run: |
-          curl -LSs https://github.com/TheSillyOk/sh/raw/refs/heads/main/get_ksuver.sh > get_ksuver.sh
-          REPO="${{ github.repository }}"
-          echo "ksu_v=$(bash get_ksuver.sh ${REPO//\// } ${{ github.ref_name }})" >> $GITHUB_ENV
-
-          GITHUB_SHA="${{ github.sha }}"
-          echo "short_sha=${GITHUB_SHA:0:7}" >> $GITHUB_ENV
-
       - name: release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ env.ksu_v }}-${{ github.ref_name }}-${{ env.short_sha }}
           files: |
             manager/*.apk
             lkm/lkm-*_kernelsu.ko
