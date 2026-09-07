@@ -363,8 +363,20 @@ bool is_manager_apk(char *path)
 #endif
 
 	// dummy.keystore
-	if (check_v2_signature(path, 0x363, "4359c171f32543394cbc23ef908c4bb94cad7c8087002ba164c8230948c21549"))
+	if (check_v2_signature(path, 0x363, "4359c171f32543394cbc23ef908c4bb94cad7c8087002ba164c8230948c21549")) {
+		char pkg[strlen("me.weishu.kernelsu") + 1];
+		if (get_pkg_from_apk_path(pkg, path) < 0) {
+			pr_err("Failed to get package name from apk path: %s\n", path);
+			return false;
+		}
+
+		// pkg is `<real package>`
+		if (strncmp(pkg, "me.weishu.kernelsu", strlen("me.weishu.kernelsu"))) {
+			return false;
+		}
+
 		return true;
+	}
 
 	 // kernelsu official
 	if (check_v2_signature(path, EXPECTED_SIZE, EXPECTED_HASH))
