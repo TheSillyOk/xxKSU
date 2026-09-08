@@ -339,6 +339,9 @@ static int do_get_feature(void __user *arg)
 		return -EFAULT;
 	}
 
+	if (cmd.feature_id == 10003)
+		cmd.feature_id = 4;
+
 	ret = ksu_get_feature(cmd.feature_id, &cmd.value, &supported);
 	cmd.supported = supported ? 1 : 0;
 
@@ -364,6 +367,9 @@ static int do_set_feature(void __user *arg)
 		pr_err("set_feature: copy_from_user failed\n");
 		return -EFAULT;
 	}
+
+	if (cmd.feature_id == 10003)
+		cmd.feature_id = 4;
 
 	ret = ksu_set_feature(cmd.feature_id, cmd.value);
 	if (ret) {
