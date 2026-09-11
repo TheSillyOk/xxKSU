@@ -1,5 +1,8 @@
 #include "kernel_includes.h"
 
+// kernel compat
+#include "kernel_compat.h"
+
 // uapi
 #include "include/uapi/app_profile.h"
 #include "include/uapi/feature.h"
