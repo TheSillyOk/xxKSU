@@ -114,7 +114,7 @@ config KSU_NOPRINTK
 config KSU_SHELL_HAS_SU_ALWAYS
 	bool "give shell su"
 	depends on KSU
-	default n
+	default y
 	help
 	  Always allow shell (2000) for su. Can speedup sucompat gate as a side-effect.
 
