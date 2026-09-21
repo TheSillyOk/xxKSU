@@ -188,9 +188,14 @@ static struct file *ksu_dentry_open_filp(const struct path *path, int flags, con
 	if (IS_ERR(realpath) || realpath == buf)
 		return ERR_PTR(-ENOENT);
 
-	const struct cred *c = override_creds(cred);
+	const struct cred *c = nullptr;	
+	if (cred && cred != current_cred())
+		c = override_creds(cred);
+
 	struct file *f = filp_open(realpath, flags, 0);
-	revert_creds(c);
+	if (c)
+		revert_creds(c);
+
 	return f;
 }
 #define dentry_open ksu_dentry_open_filp
