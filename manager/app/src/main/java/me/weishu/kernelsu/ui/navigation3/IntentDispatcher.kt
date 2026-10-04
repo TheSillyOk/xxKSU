@@ -170,14 +170,6 @@ fun IntentDispatcher(intentChannel: ReceiveChannel<Intent>) {
 
         when (action) {
             is PendingAction.InstallModule -> {
-                if (isSafeMode) {
-                    Toast.makeText(
-                        context,
-                        resources.getString(R.string.safe_mode_module_disabled),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    return@CollectIntentChannel
-                }
                 if (action.requiresConfirmation) {
                     pendingZipInstall = action
                     installDialog.showConfirm(
