@@ -1,0 +1,56 @@
+name: Sync
+
+permissions:
+  contents: write
+  actions: write
+
+on:
+  workflow_dispatch:
+  schedule:
+   - cron: "0 */6 * * *"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          repository: 'backslashxx/KernelSU'
+          ref: "${{ github.ref_name }}"
+          submodules: 'recursive'
+          fetch-depth: '0'
+          token: "${{ secrets.WORKFLOW_TOKEN }}"
+
+      - name: Apply changes and push
+        env:
+          GH_TOKEN: "${{ secrets.WORKFLOW_TOKEN }}"
+        run: |
+          curl -LSs https://gist.github.com/TheSillyOk/8b74b5f2c6b1da211ef93c3176d0e235/raw/xxksu.patch > xxksu.patch
+          patch -p1 < xxksu.patch
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          find . -name "*.orig" -delete
+          rm xxksu.patch
+
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          LATEST_TAG=$(git tag -l | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
+
+          COMMIT_COUNT=$(git rev-list --count ${LATEST_TAG}..HEAD)
+          xx=$(cat manager/build.gradle.kts | grep -oE "commitCount - [0-9]+" | grep -oE "[0-9]+")
+          COUNT=$((COMMIT_COUNT - xx))
+
+          git add .
+          git commit -m "Apply changes - $SHORT_SHA"
+
+          curl -LSs https://github.com/TheSillyOk/sh/raw/refs/heads/main/get_ksuver.sh > get_ksuver.sh
+          REPO="${{ github.repository }}"
+          KSU_V=$(bash get_ksuver.sh ${REPO//\// } ${{ github.ref_name }})
+
+          git remote add my https://github.com/${{ github.repository }}
+          git push my ${{ github.ref_name }} -f
+
+          git tag "${LATEST_TAG}-${COUNT}-${SHORT_SHA}"
+          git push my "${LATEST_TAG}-${COUNT}-${SHORT_SHA}" -f
