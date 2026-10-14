@@ -2,7 +2,9 @@ package me.weishu.kernelsu.ui.screen.home
 
 import androidx.compose.runtime.Immutable
 import me.weishu.kernelsu.KernelVersion
+import me.weishu.kernelsu.ksuApp
 import me.weishu.kernelsu.ui.util.module.LatestVersionInfo
+import me.weishu.kernelsu.ui.screen.home.getManagerVersion
 
 @Immutable
 data class HomeUiState(
@@ -56,7 +58,10 @@ data class HomeUiState(
         get() = isManager && !isManagerPrBuild && isKernelPrBuild
 
     val hasUpdate: Boolean
-        get() = latestVersionInfo.versionCode > currentManagerVersionCode
+        get() {
+	        val managerVersion = getManagerVersion(ksuApp)
+		return latestVersionInfo.versionName != managerVersion.versionName
+	}
 }
 
 @Immutable
