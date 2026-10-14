@@ -2,7 +2,9 @@ package me.weishu.kernelsu.ui.screen.home
 
 import androidx.compose.runtime.Immutable
 import me.weishu.kernelsu.KernelVersion
+import me.weishu.kernelsu.ksuApp
 import me.weishu.kernelsu.ui.util.module.LatestVersionInfo
+import me.weishu.kernelsu.ui.screen.home.getManagerVersion
 
 @Immutable
 data class HomeUiState(
@@ -24,6 +26,7 @@ data class HomeUiState(
     val latestVersionInfo: LatestVersionInfo,
     val currentManagerVersionCode: Long,
     val systemInfo: SystemInfo,
+    val managerVersion = getManagerVersion(ksuApp),
 ) {
     val isSELinuxPermissive: Boolean
         get() = systemInfo.selinuxStatus == "Permissive"
@@ -56,7 +59,7 @@ data class HomeUiState(
         get() = isManager && !isManagerPrBuild && isKernelPrBuild
 
     val hasUpdate: Boolean
-        get() = latestVersionInfo.versionCode > currentManagerVersionCode
+        get() = latestVersionInfo.versionName != managerVersion.versionName
 }
 
 @Immutable
