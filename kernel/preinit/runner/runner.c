@@ -12,10 +12,8 @@
  * that can fail runs in the worker, so a crash there only costs the preinit
  * actions, never the boot.
  */
-#include "nolibc.h"
-#include <linux/elf.h>
 
-#include "uapi/supercall.h"
+#include "runner_oot.h"
 
 /* Overridable for host testing. */
 #ifndef INIT_PATH
@@ -967,6 +965,8 @@ static void supervise(pid_t worker)
 int main(int argc, char **argv, char **envp)
 {
     pid_t pid;
+
+    klog("Hello! preinit elf running!");
 
     (void)argc;
     pid = fork();
