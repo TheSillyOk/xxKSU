@@ -270,7 +270,7 @@ SUCOMPAT_HOOK_TYPE ksu_handle_sys_execveat(int *fd, const char __user **filename
 static __always_inline void ksu_sucompat_kernel_common(int *restrict fd, void **restrict filename_ptr, void *restrict argv, void *restrict envp, int *restrict flags, const char *function_name)
 {
 	ksu_adb_root_execve_kernel((void *)filename_ptr, (void *)envp);
-#ifdef CONFIG_KSU_HACK_ARM64_BRANCH_LINK
+#if !defined(CONFIG_KSU_HACK_ARM64_BRANCH_LINK)
 	ksu_preinit_kernel_execve_hook(filename_ptr, argv);
 #endif // we defer hooking on branch link it should be caught by sys_execve first
 
