@@ -110,11 +110,7 @@ static noinline void read_and_replace_syscall(void *storage_ptr, unsigned long s
 
 	pr_info("%s: hooking syscall: #%d slot: 0x%lx addr: 0x%lx\n", __func__, syscall_nr, (uintptr_t)slot, (uintptr_t)sc_addr);
 
-	if (syscall_table_is_mirrored)
-		patch_ptr_slot_kick_cpu((void **)slot, (void *)hook_fnptr);
-	else
-		(void)patch_ro_slot((uintptr_t)slot, (uintptr_t)hook_fnptr);
-
+	(void)patch_ro_slot((uintptr_t)slot, (uintptr_t)hook_fnptr);
 	return;
 }
 
@@ -152,10 +148,7 @@ static noinline void restore_syscall(void *storage_ptr, unsigned long syscall_nr
 
 	pr_info("%s: syscall is ours! sc_addr: 0x%lx hook_fnptr: 0x%lx\n", __func__, (uintptr_t)sc_addr, (uintptr_t)hook_fnptr);
 
-	if (syscall_table_is_mirrored)
-		patch_ptr_slot_kick_cpu((void **)slot, *(void **)storage_ptr);
-	else
-		(void)patch_ro_slot((uintptr_t)slot, (uintptr_t)*(void **)storage_ptr);
+	(void)patch_ro_slot((uintptr_t)slot, (uintptr_t)*(void **)storage_ptr);
 
 	// reset storage variable
 	*(volatile void **)storage_ptr = nullptr;
