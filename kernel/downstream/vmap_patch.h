@@ -79,8 +79,7 @@ static noinline int patch_ro_slot(uintptr_t slot_ptr, uintptr_t new_ptr)
 	}
 
 	int ret = patch_ro_slot_vmap(slot_ptr, new_ptr);
-	if (ret)
-		pr_info("patch_ro_slot_vmap: *(uintptr_t *)0x%lx = 0x%lx; ret: %d\n", slot_ptr, new_ptr, ret);
+	pr_info("patch_ro_slot_vmap: *(uintptr_t *)0x%lx = 0x%lx; ret: %d\n", slot_ptr, new_ptr, ret);
 
 	return ret;
 }
