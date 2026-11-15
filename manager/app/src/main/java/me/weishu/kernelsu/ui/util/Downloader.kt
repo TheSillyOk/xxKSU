@@ -53,7 +53,7 @@ internal suspend fun isDownloadAvailable(uri: Uri): Boolean = withContext(Dispat
 
 fun checkNewVersion(): LatestVersionInfo {
     if (!isNetworkAvailable(ksuApp)) return LatestVersionInfo()
-    val url = "https://api.github.com/repos/backslashxx/KernelSU/releases/latest"
+    val url = "https://api.github.com/repos/TheSillyOk/xxKSU/releases/latest"
     // default null value if failed
     val defaultValue = LatestVersionInfo()
     runCatching {
@@ -78,10 +78,12 @@ fun checkNewVersion(): LatestVersionInfo {
                     val matchResult = regex.find(name) ?: continue
                     matchResult.groupValues[1]
                     val versionCode = matchResult.groupValues[2].toInt()
+		    val versionName = "v${matchResult.groupValues[1]}"
                     val downloadUrl = asset.getString("browser_download_url")
 
                     return LatestVersionInfo(
                         versionCode,
+			versionName,
                         downloadUrl,
                         changelog
                     )
