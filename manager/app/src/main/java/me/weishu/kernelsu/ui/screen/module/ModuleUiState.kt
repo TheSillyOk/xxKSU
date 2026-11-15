@@ -61,7 +61,7 @@ data class ModuleUiState(
     val confirmDialogState: ModuleConfirmDialogState? = null,
 ) {
     val installButtonVisible: Boolean
-        get() = !(isSafeMode || magiskInstalled)
+        get() = !magiskInstalled
 }
 
 @Immutable
