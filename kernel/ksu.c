@@ -18,6 +18,10 @@
 #endif
 #endif // MODULE
 
+#ifdef MODULE
+#define LSM_USES_BRANCH_LINK 1
+#endif
+
 #include "kernel_includes.h"
 
 // selinux includes
