@@ -81,6 +81,8 @@ jobs:
         ls -la "$OUT_DIR/$OUTPUT_NAME"
         echo "Size: $(du -h "$OUT_DIR/$OUTPUT_NAME" | cut -f1)"
         llvm-strip -d "$OUT_DIR/$OUTPUT_NAME"
+        llvm-objdump -t "$OUT_DIR/$OUTPUT_NAME" | grep -E 'ksu_setprocattr|ksu_inode_setxattr|ksu_vfs_rename'
+        llvm-objdump -dr "$OUT_DIR/$OUTPUT_NAME" | grep -A20 -E 'ksu_setprocattr|ksu_inode_setxattr|ksu_vfs_rename'
         echo "Size after stripping: $(du -h "$OUT_DIR/$OUTPUT_NAME" | cut -f1)"
 
     - name: Upload kernelsu.ko artifact
