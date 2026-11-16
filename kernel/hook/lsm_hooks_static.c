@@ -147,12 +147,12 @@ static void __init ksu_lsm_hook_init(void)
 #endif
 	symbol_addr = kallsyms_lookup_retry("vfs_rename");
 	ret = arm64_bl_patch(target_callsite, ksu_get_ksym_size(target_callsite, 256 * sizeof(uint32_t)), symbol_addr, (uintptr_t)&ksu_vfs_rename);
-	pr_info("LSM: vfs_rename: ret %d \n", ret);
 	if (ret == -ERANGE) {
 		trampoline = create_landing_pad((uintptr_t)&ksu_vfs_rename);
 		if (!!trampoline)
 			ret = arm64_bl_patch(target_callsite, ksu_get_ksym_size(target_callsite, 256 * sizeof(uint32_t)), symbol_addr, trampoline);
 	}
+	pr_info("LSM: vfs_rename: ret %d \n", ret);
 	if (!ret)
 		goto rename_hook_done;
 
