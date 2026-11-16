@@ -38,7 +38,7 @@ static int ksu_inode_rename(struct inode *old_dir, struct dentry *old_dentry, st
 	return security_inode_rename(old_dir, old_dentry, new_dir, new_dentry, flags);
 }
 
-#if 0 // setuid
+// setuid
 extern int security_task_fix_setuid(struct cred *new, const struct cred *old, int flags);
 static int ksu_task_fix_setuid(struct cred *new, const struct cred *old, int flags)
 {
@@ -48,7 +48,6 @@ static int ksu_task_fix_setuid(struct cred *new, const struct cred *old, int fla
 
 	return security_task_fix_setuid(new, old, flags);
 }
-#endif
 
 #define __AARCH64_setresuid 147
 static void *aarch64_setresuid __read_mostly = nullptr;
@@ -156,7 +155,9 @@ static void __init ksu_lsm_hook_init(void)
 	if (!ret)
 		goto rename_hook_done;
 
-	target_callsite = kallsyms_lookup_retry("vfs_rename");
+	target_callsite = kallsyms_lookup_retry("vfs_rename2"); // vfs2
+	if (!target_callsite)
+		target_callsite = kallsyms_lookup_retry("vfs_rename");
 	symbol_addr = kallsyms_lookup_retry("security_inode_rename");
 	ret = arm64_bl_patch(target_callsite, ksu_get_ksym_size(target_callsite, 256 * sizeof(uint32_t)), symbol_addr, (uintptr_t)&ksu_inode_rename);
 	if (ret == -ERANGE) {
@@ -168,18 +169,24 @@ static void __init ksu_lsm_hook_init(void)
 
 rename_hook_done:
 
-#if 0
 	target_callsite = kallsyms_lookup_retry("__sys_setresuid");
 	if (!target_callsite)
 		target_callsite = kallsyms_lookup_retry("__arm64_sys_setresuid");
 	symbol_addr = kallsyms_lookup_retry("security_task_fix_setuid");
 	ret = arm64_bl_patch(target_callsite, ksu_get_ksym_size(target_callsite, 256 * sizeof(uint32_t)), symbol_addr, (uintptr_t)&ksu_task_fix_setuid);
-	pr_info("lsm_hijack: security_task_fix_setuid: ret %d \n", ret);
-#endif
-	replace_syscall((void *)&aarch64_setresuid, __AARCH64_setresuid, (void *)hook_aarch64_setresuid, native_sct);
-#ifdef CONFIG_COMPAT
-	replace_syscall((void *)&armeabi_setresuid, __ARMEABI_setresuid, (void *)hook_armeabi_setresuid, compat_sct);
-#endif
+	if (ret == -ERANGE) {
+		trampoline = create_landing_pad((uintptr_t)&ksu_task_fix_setuid);
+		if (!!trampoline)
+			ret = arm64_bl_patch(target_callsite, ksu_get_ksym_size(target_callsite, 256 * sizeof(uint32_t)), symbol_addr, trampoline);
+	}
+	if (ret) {
+		pr_info("LSM: security_task_fix_setuid: err: %d ! fallback to sys_setresuid!\n", ret);
+		replace_syscall((void *)&aarch64_setresuid, __AARCH64_setresuid, (void *)hook_aarch64_setresuid, native_sct);
+	#ifdef CONFIG_COMPAT
+		replace_syscall((void *)&armeabi_setresuid, __ARMEABI_setresuid, (void *)hook_armeabi_setresuid, compat_sct);
+	#endif
+	} else
+		pr_info("LSM: security_task_fix_setuid: ret %d \n", ret);
 
 #if !defined(CONFIG_KSU_TAMPER_SYSCALL_TABLE) && !defined(CONFIG_KSU_HACK_ARM64_BRANCH_LINK)
 #ifdef CONFIG_COMPAT
