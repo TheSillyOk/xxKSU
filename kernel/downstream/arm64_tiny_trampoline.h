@@ -68,9 +68,9 @@ static inline void generate_trampoline(uint32_t buf[], uint64_t target)
 nodiscard static void *hunt_entry_text_code_cave(void)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)
-	extern char __entry_text_start[], __entry_text_end[];
-	uintptr_t entry_text_start_p = (uintptr_t)__entry_text_start;
-	uintptr_t entry_text_end_p = (uintptr_t)__entry_text_end;
+	extern char _stext[], _etext[];
+	uintptr_t entry_text_start_p = (uintptr_t)_stext;
+	uintptr_t entry_text_end_p = (uintptr_t)_etext;
 #else
 	uintptr_t entry_text_start_p = (uintptr_t)kallsyms_lookup_name("__entry_text_start");
 	uintptr_t entry_text_end_p = (uintptr_t)kallsyms_lookup_name("__entry_text_end");
