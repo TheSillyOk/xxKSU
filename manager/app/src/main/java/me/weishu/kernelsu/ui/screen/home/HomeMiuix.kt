@@ -201,7 +201,7 @@ private fun UpdateCard(
         exit = shrinkVertically() + fadeOut()
     ) {
         WarningCard(
-            message = stringResource(id = R.string.new_version_available, newVersion.versionCode),
+            message = stringResource(id = R.string.new_version_available, newVersion.versionName),
             level = WarningLevel.Notice,
             onClick = {
                 if (newVersion.changelog.isEmpty()) {
