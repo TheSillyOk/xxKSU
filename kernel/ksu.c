@@ -9,6 +9,7 @@
 	#define CONFIG_KSU_HACK_ARM64_BRANCH_LINK 1
 	#define CONFIG_KSU_FEATURE_ADBROOT 1
 	#define CONFIG_KSU_THRONE_TRACKER_ALWAYS_THREADED 1
+	#define LSM_USES_BRANCH_LINK 1
 #endif // CONFIG_KSU_HEURISTIC_IN_TREE_BUILD
 
 // for in-tree, this has to be detected
@@ -147,7 +148,7 @@
 #include "hook/setuid_hook.c"
 
 #ifdef CONFIG_KSU_LSM_SECURITY_HOOKS
-	#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 8, 0)
+	#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 8, 0) || defined(LSM_USES_BRANCH_LINK)
 	#include "hook/lsm_hooks_static.c"
 	#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)
 	#include "hook/lsm_hooks_list.c"
