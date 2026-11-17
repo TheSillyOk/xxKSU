@@ -121,7 +121,7 @@ loop_start:
 #define SETPROCATTR_TYPE_lsm	const char *lsm, const char *name, void *, size_t
 #define SETPROCATTR_TYPE_name	const char *name, void *, size_t
 
-static int ksu_setprocattr_lsmid(int lsmid, const char *name, void *value, size_t size)
+__overloadable static int ksu_setprocattr_lsmid(int lsmid, const char *name, void *value, size_t size)
 {
 	ksu_hide_setprocattr_inline(name, value, size);
 
@@ -129,7 +129,7 @@ static int ksu_setprocattr_lsmid(int lsmid, const char *name, void *value, size_
 	return ((typeof(ksu_setprocattr_lsmid) *)security_setprocattr)(lsmid, name, value, size);
 }
 
-static int ksu_setprocattr_lsm(const char *lsm, const char *name, void *value, size_t size)
+__overloadable static int ksu_setprocattr_lsm(const char *lsm, const char *name, void *value, size_t size)
 {
 	ksu_hide_setprocattr_inline(name, value, size);
 
@@ -137,7 +137,7 @@ static int ksu_setprocattr_lsm(const char *lsm, const char *name, void *value, s
 	return ((typeof(ksu_setprocattr_lsm) *)security_setprocattr)(lsm, name, value, size);
 }
 
-static int ksu_setprocattr_name(const char *name, void *value, size_t size)
+__overloadable static int ksu_setprocattr_name(const char *name, void *value, size_t size)
 {
 	ksu_hide_setprocattr_inline(name, value, size);
 
@@ -158,7 +158,7 @@ struct user_namespace;
 #define INODE_SETXATTR_TYPE_userns	struct user_namespace *, struct dentry *, const char *, const void *, size_t, int
 #define INODE_SETXATTR_TYPE_legacy	struct dentry *, const char *, const void *, size_t, int
 
-static int ksu_inode_setxattr_idmap(struct mnt_idmap *idmap, struct dentry *dentry,
+__overloadable static int ksu_inode_setxattr_idmap(struct mnt_idmap *idmap, struct dentry *dentry,
 			const char *name, const void *value, size_t size, int flags)
 {
 	ksu_hide_setxattr_inline(name, value, size);
@@ -167,7 +167,7 @@ static int ksu_inode_setxattr_idmap(struct mnt_idmap *idmap, struct dentry *dent
 	return ((typeof(ksu_inode_setxattr_idmap) *)security_inode_setxattr)(idmap, dentry, name, value, size, flags);
 }
 
-static int ksu_inode_setxattr_userns(struct user_namespace *mnt_userns, struct dentry *dentry, 
+__overloadable static int ksu_inode_setxattr_userns(struct user_namespace *mnt_userns, struct dentry *dentry, 
 			const char *name, const void *value, size_t size, int flags)
 {
 	ksu_hide_setxattr_inline(name, value, size);
@@ -176,7 +176,7 @@ static int ksu_inode_setxattr_userns(struct user_namespace *mnt_userns, struct d
 	return ((typeof(ksu_inode_setxattr_userns) *)security_inode_setxattr)(mnt_userns, dentry, name, value, size, flags);
 }
 
-static int ksu_inode_setxattr_legacy(struct dentry *dentry, const char *name, const void *value, size_t size, int flags)
+__overloadable static int ksu_inode_setxattr_legacy(struct dentry *dentry, const char *name, const void *value, size_t size, int flags)
 {
 	ksu_hide_setxattr_inline(name, value, size);
 

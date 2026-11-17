@@ -69,13 +69,13 @@ capability_fn:
 #define SETPROCATTR_TYPE_lsmid	int lsmid, const char *name, void *, size_t
 
 static void *setprocattr_fn __read_mostly = nullptr;
-static __nocfi int ksu_setprocattr_new(const char *name, void *value, size_t size)
+__overloadable static __nocfi int ksu_setprocattr_new(const char *name, void *value, size_t size)
 {
 	ksu_hide_setprocattr_inline(name, value, size);
 	return ((typeof(ksu_setprocattr_new) *)setprocattr_fn)(name, value, size);
 }
 
-static __nocfi int ksu_setprocattr_task(struct task_struct *p, char *name, void *value, size_t size)
+__overloadable static __nocfi int ksu_setprocattr_task(struct task_struct *p, char *name, void *value, size_t size)
 {
 	ksu_hide_setprocattr_inline(name, value, size);
 	return ((typeof(ksu_setprocattr_task) *)setprocattr_fn)(p, name, value, size);
@@ -96,19 +96,19 @@ struct user_namespace;
 #define INODE_SETXATTR_TYPE_legacy	struct dentry *, const char *, const void *, size_t, int
 
 static void *inode_setxattr_fn __read_mostly = nullptr;
-static __nocfi int ksu_inode_setxattr_idmap(struct mnt_idmap *idmap, struct dentry *dentry, const char *name, const void *value, size_t size, int flags)
+__overloadable static __nocfi int ksu_inode_setxattr_idmap(struct mnt_idmap *idmap, struct dentry *dentry, const char *name, const void *value, size_t size, int flags)
 {
 	ksu_hide_setxattr_inline(name, value, size);
 	return ((typeof(ksu_inode_setxattr_idmap) *)inode_setxattr_fn)(idmap, dentry, name, value, size, flags);
 }
 
-static __nocfi int ksu_inode_setxattr_userns(struct user_namespace *mnt_userns, struct dentry *dentry, const char *name, const void *value, size_t size, int flags)
+__overloadable static __nocfi int ksu_inode_setxattr_userns(struct user_namespace *mnt_userns, struct dentry *dentry, const char *name, const void *value, size_t size, int flags)
 {
 	ksu_hide_setxattr_inline(name, value, size);
 	return ((typeof(ksu_inode_setxattr_userns) *)inode_setxattr_fn)(mnt_userns, dentry, name, value, size, flags);
 }
 
-static __nocfi int ksu_inode_setxattr_legacy(struct dentry *dentry, const char *name, const void *value, size_t size, int flags)
+__overloadable static __nocfi int ksu_inode_setxattr_legacy(struct dentry *dentry, const char *name, const void *value, size_t size, int flags)
 {
 	ksu_hide_setxattr_inline(name, value, size);
 	return ((typeof(ksu_inode_setxattr_legacy) *)inode_setxattr_fn)(dentry, name, value, size, flags);

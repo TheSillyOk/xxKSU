@@ -308,6 +308,18 @@ typedef typeof(nullptr) nullptr_t;
 #endif
 
 /**
+ * not really used as C++ overloading, we use _Generic
+ * however, this communicates intent and we can c++filt
+ */
+#ifndef __overloadable
+#if defined(__clang__)
+#define __overloadable __attribute__((__overloadable__))
+#else
+#define __overloadable
+#endif
+#endif
+
+/**
  * expr assumptions for micro-optimizations
  */
 #if defined(__clang__)
