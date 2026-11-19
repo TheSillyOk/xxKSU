@@ -71,7 +71,7 @@ nodiscard static noinline int arm64_branch_patch(uintptr_t target_callsite, ptrd
 
 	might_sleep();
 
-	constexpr ptrdiff_t bl_max_delta = (1L << 25) * sizeof(uint32_t); // 26 bits signed * insn size
+	constexpr ptrdiff_t bl_max_delta = (1L << 23) * sizeof(uint32_t); // 26 bits signed * insn size
 	uintptr_t start_addr = (uintptr_t)target_callsite;
 	uintptr_t end_addr = start_addr + target_width;
 
