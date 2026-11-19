@@ -517,6 +517,101 @@ hook_classic:
 	ksu_init_hook_transaction_ops_write();
 }
 #define ksu_init_hook_transaction_ops_write patch_branches_selinux_transaction_write
+
+static void *security_context_to_sid_core_fn __read_mostly = nullptr;
+static __always_inline bool should_ret_einval(const char *scontext, u32 scontext_len)
+{
+	if (unlikely(!ksu_selinux_hide_enabled))
+		return false;
+
+	if (!ksu_is_seccomp_enabled())
+		return false;
+
+	if (current_uid().val < 10000)
+		return false;
+
+	if (!ksu_should_destroy_context(scontext, scontext_len))
+		return false;
+
+	pr_info("selinux_hide: security_context_to_sid: destroy: %.*s\n", scontext_len, scontext);
+	return true;
+}
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0) && defined(KSU_COMPAT_HAS_SELINUX_STATE)
+static __nocfi int sh_security_context_to_sid_core(struct selinux_state *state, const char *scontext, u32 scontext_len, u32 *sid, u32 def_sid, gfp_t gfp_flags, int force)
+{
+	int ret = ((typeof (sh_security_context_to_sid_core) *)security_context_to_sid_core_fn)(state, scontext, scontext_len, sid, def_sid, gfp_flags, force);
+	if (ret)
+		return ret;
+	if (!!should_ret_einval(scontext, scontext_len))
+		return -EINVAL;
+	return ret;
+}
+static int sh_security_context_to_sid(struct selinux_state *state, const char *scontext, u32 scontext_len, u32 *sid, gfp_t gfp)
+{
+	int ret = security_context_to_sid(state, scontext, scontext_len, sid, gfp);
+	if (ret)
+		return ret;
+	if (!!should_ret_einval(scontext, scontext_len))
+		return -EINVAL;
+	return ret;
+}
+#else
+static __nocfi int sh_security_context_to_sid_core(const char *scontext, u32 scontext_len, u32 *sid, u32 def_sid, gfp_t gfp_flags, int force)
+{
+	int ret = ((typeof (sh_security_context_to_sid_core) *)security_context_to_sid_core_fn)(scontext, scontext_len, sid, def_sid, gfp_flags, force);
+	if (ret)
+		return ret;
+	if (!!should_ret_einval(scontext, scontext_len))
+		return -EINVAL;
+	return ret;
+}
+static int sh_security_context_to_sid(const char *scontext, u32 scontext_len, u32 *sid, gfp_t gfp)
+{
+	int ret = security_context_to_sid(scontext, scontext_len, sid, gfp);
+	if (ret)
+		return ret;
+	if (!!should_ret_einval(scontext, scontext_len))
+		return -EINVAL;
+	return ret;
+}
+#endif
+
+static int patch_branch_context_to_sid(void)
+{
+	uintptr_t target_callsite = kallsyms_lookup_retry("selinux_inode_setxattr");
+	uintptr_t symbol_addr = kallsyms_lookup_retry("security_context_to_sid_core");
+	if (!symbol_addr || !target_callsite)
+		goto noncore;
+
+	security_context_to_sid_core_fn = (void *)symbol_addr;
+
+	int ret = arm64_b_or_bl_patch(target_callsite, ksu_get_ksym_size(target_callsite, 32 * 4), symbol_addr, (uintptr_t)&sh_security_context_to_sid_core);
+	if (ret == -ERANGE) {
+		uintptr_t landing_pad = create_landing_pad_kernel((uintptr_t)&sh_security_context_to_sid_core);
+		if (landing_pad)
+			ret = arm64_b_or_bl_patch(target_callsite, ksu_get_ksym_size(target_callsite, 32 * 4), symbol_addr, landing_pad);
+	}
+	pr_info("selinux_hide: hook_site: selinux_inode_setxattr->security_context_to_sid_core ret: %d \n", ret);
+	if (!ret)
+		return ret;
+
+noncore:;
+	target_callsite = kallsyms_lookup_retry("selinux_inode_setxattr");
+	symbol_addr = kallsyms_lookup_retry("security_context_to_sid");
+	if (!symbol_addr || !target_callsite)
+		return -ENOENT;
+
+	ret = arm64_b_or_bl_patch(target_callsite, ksu_get_ksym_size(target_callsite, 32 * 4), symbol_addr, (uintptr_t)&sh_security_context_to_sid);
+	if (ret == -ERANGE) {
+		uintptr_t landing_pad = create_landing_pad_kernel((uintptr_t)&sh_security_context_to_sid);
+		if (landing_pad)
+			ret = arm64_b_or_bl_patch(target_callsite, ksu_get_ksym_size(target_callsite, 32 * 4), symbol_addr, landing_pad);
+	}
+	pr_info("selinux_hide: hook_site: selinux_inode_setxattr->security_context_to_sid_core ret: %d \n", ret);
+	return ret;
+}
+#define do_patch_branch_context_to_sid patch_branch_context_to_sid
+
 #endif // ARM64 && KALLSYMS
 
 // init kthread
@@ -562,6 +657,10 @@ try_again:
 page_ok:
 	ksu_init_hook_sel_handle_status_ops_open();
 	ksu_init_hook_transaction_ops_write();
+
+#ifdef do_patch_branch_context_to_sid
+	patch_branch_context_to_sid();
+#endif
 
 	// selinux_setprocattr hook init is on lsm.
 	

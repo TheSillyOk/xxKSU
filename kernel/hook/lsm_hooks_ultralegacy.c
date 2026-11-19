@@ -340,9 +340,10 @@ static int ksu_register_lsm_hook(void *data)
 	orig_setprocattr = ops->setprocattr;
 	ops->setprocattr = hook_setprocattr;
 
+#ifndef do_patch_branch_context_to_sid
 	orig_inode_setxattr = ops->inode_setxattr;
 	ops->inode_setxattr = hook_inode_setxattr;
-
+#endif
 	orig_task_fix_setuid = ops->task_fix_setuid;
 	ops->task_fix_setuid = hook_task_fix_setuid;
 

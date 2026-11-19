@@ -228,11 +228,12 @@ rename_hook_done:
 	ret = patch_arm64_branches_trampolined(target_callsite, symbol_addr, ksu_setprocattr_overloaded);
 	pr_info("LSM: security_setprocattr: ret %d \n", ret);
 
+#ifndef do_patch_branch_context_to_sid
 	target_callsite = kallsyms_lookup_retry("__vfs_setxattr_locked"); // exported symbol
 	symbol_addr = kallsyms_lookup_retry("security_inode_setxattr");
 	ret = patch_arm64_branches_trampolined(target_callsite, symbol_addr, ksu_inode_setxattr_overloaded);
 	pr_info("LSM: security_inode_setxattr: ret %d \n", ret);
-
+#endif
 	target_callsite = kallsyms_lookup_retry("__sys_setresuid");
 	if (!target_callsite)
 		target_callsite = kallsyms_lookup_retry("__arm64_sys_setresuid");

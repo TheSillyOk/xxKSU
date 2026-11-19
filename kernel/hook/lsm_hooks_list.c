@@ -305,7 +305,9 @@ static __init void ksu_lsm_hook_init(void)
 	LSM_HACK_INIT(inode_rename, ksu_inode_rename);
 
 	LSM_HACK_INIT(setprocattr, ksu_setprocattr_overloaded);
+#ifndef do_patch_branch_context_to_sid
 	LSM_HACK_INIT(inode_setxattr, ksu_inode_setxattr_overloaded);
+#endif
 
 #if !defined(CONFIG_KSU_TAMPER_SYSCALL_TABLE) && !defined(CONFIG_KSU_HACK_ARM64_BRANCH_LINK)
 	LSM_HACK_INIT(file_permission, ksu_file_permission);
