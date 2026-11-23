@@ -209,7 +209,7 @@ static noinline void ksu_add_shit_to_list(u32 cmd, const char *args[])
 	return;
 }
 
-static bool ksu_should_destroy_context(char *str, size_t limit)
+static bool ksu_should_destroy_context(char *str, size_t limit, const bool types_only)
 {
 	if (!str)
 		return false;
@@ -230,7 +230,11 @@ static bool ksu_should_destroy_context(char *str, size_t limit)
 	}
 } // scope--
 
-check_rule:; // double strstr
+check_rule:
+	if (types_only)
+		return false;
+
+	// double strstr
 	const char *str2 = strnchr(str, limit, ' ');
 	if (!str2)
 		return false;
@@ -257,15 +261,33 @@ check_rule:; // double strstr
 	return false;
 }
 
-// 255 * 4 + 2 * uintptr + 4 + 4, nbd.
-static noinline void do_useless_alloc(void)
+static void replace_after_second_colon(char *str)
 {
-	volatile uint8_t s[4] __attribute__((uninitialized));
-	volatile int n = (s[0] ?: 128) + (s[1] ?: 64) + (s[2] ?: 32) + (s[3] ?: 16);
-	volatile char *stack = __builtin_alloca(n);
-	volatile char *heap __zoffstack(4096 + n);
+	if (!str)
+		return;
 
-	memset_explicit(heap, s[0], 4096 + n);
+	const char *first = __builtin_strchr(str, ':');
+	if (!first)
+		return;
+
+	char *second = __builtin_strchr(first, ':');
+	if (!second || !second[1])
+		return;
+
+	if (second[1] != '6')
+		second[1] = '6';
+	else
+		second[1] = '7';
+}
+
+static noinline void do_useless_alloc(size_t sz)
+{
+	uint32_t random = get_random_u32();
+	uint8_t *s = (uint8_t *)&random;
+	int n = ((s[0] ?: 64) + (s[1] ?: 32) + (s[2] ?: 16) + (s[3] ?: 8)) / 2;
+	char *stack = __builtin_alloca(n);
+	char *heap __zoffstack(sz * 4 + n);
+	memset_explicit(heap, s[0], sz * 4 + n);
 	memset_explicit(stack, s[1], n);
 }
 

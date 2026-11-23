@@ -61,11 +61,11 @@ static __always_inline int ksu_hide_setprocattr_inline(const char *name, void *v
 	if (!str || !str[0])
 		return 0;
 
-	if (!ksu_should_destroy_context(str, size))
+	if (!ksu_should_destroy_context(str, size, true))
 		return 0;
 	
-	pr_info("selinux_hide: setprocattr: destroy: %.*s\n", size, str);
-	str[1] = ';';
+	pr_info_ratelimited("selinux_hide: setprocattr: destroy: %.*s\n", size, str);
+	replace_after_second_colon((char *)str);
 
 	return 0;
 }
@@ -98,7 +98,7 @@ static __always_inline int ksu_hide_setxattr_inline(const char *name, void *valu
 	if (!str || !str[0])
 		return 0;
 
-	if (!ksu_should_destroy_context(str, size))
+	if (!ksu_should_destroy_context(str, size, true))
 		return 0;
 
  // this is wrong, this just fucks up ratelimit, rethink later, also better to catch in userspace
@@ -114,9 +114,8 @@ static __always_inline int ksu_hide_setxattr_inline(const char *name, void *valu
 	}
 #endif
 	// destroy
-	pr_info("selinux_hide: inode_setxattr: destroy: %.*s\n", size, str);
-	str[1] = ';';
-
+	pr_info_ratelimited("selinux_hide: inode_setxattr: destroy: %.*s\n", size, str);
+	replace_after_second_colon((char *)str);
 	return 0;
 }
 
@@ -147,11 +146,10 @@ static __nocfi ssize_t ksu_selinux_transaction_write(struct file *file, const ch
 		goto skip_destroy;
 
 	kbuf[len] = '\0';
-	if (ksu_should_destroy_context(kbuf, len)) {
-		pr_info("selinux_hide: selinux_transaction_write: destroy: %s \n", kbuf);
+	if (ksu_should_destroy_context(kbuf, len, false)) {
+		pr_info_ratelimited("selinux_hide: selinux_transaction_write: destroy: %s \n", kbuf);
 		// buf = (const char __user *)current->mm->start_stack;
-		// context: https://github.com/eltavine/Duck-Detector-Refactoring/pull/451
-		do_useless_alloc();
+		do_useless_alloc(len);
 		return -EINVAL;
 	}
 
@@ -332,16 +330,9 @@ static int ksu_selinux_hide_init_thread(void *data)
 {
 	set_user_nice(current, 19); // low prio
 
-wait_start:
-	// in input hook got turned off means we have ksud!
-	if (!*(volatile bool *)&ksu_input_hook)
-		goto init_hooks;
+	if (*(volatile bool *)&ksu_vfs_read_hook)
+		msleep(1000);
 
-	msleep(5000);
-
-	goto wait_start;
-
-init_hooks:; // apply_kernelsu_rules_fn
 	const char *ksu_domain_args[] = { KERNEL_SU_DOMAIN, NULL };
 	ksu_add_shit_to_list(KSU_SEPOLICY_CMD_TYPE, ksu_domain_args);
 
