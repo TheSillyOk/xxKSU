@@ -102,9 +102,6 @@ static char *sh_simple_transaction_get(struct file *file, const char __user *buf
 		do_useless_alloc(size);
 		do_useless_alloc(size);
 		return ERR_PTR(-EINVAL);
-
-//		replace_after_second_colon(data, size);
-//		do_useless_alloc(size);
 	}
 
 	if (ino == SEL_ACCESS && ksu_should_destroy_context(data, size, false)) {
@@ -113,9 +110,6 @@ static char *sh_simple_transaction_get(struct file *file, const char __user *buf
 		do_useless_alloc(size);
 		do_useless_alloc(size);
 		return ERR_PTR(-EINVAL);
-
-//		replace_after_second_colon(data, size);
-//		do_useless_alloc(size);
 	}
 	return data;
 
